@@ -1,0 +1,48 @@
+﻿@page "/viewentity"
+@using Shared.Entities
+@inject HttpClient Http
+
+<h3>View All Entities</h3>
+
+@if (entities == null)
+{
+    <p>Loading...</p>
+}
+else if (!entities.Any())
+{
+    <p>No entities found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Properties</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entity in entities)
+            {
+                <tr>
+                    <td>@entity.Id</td>
+                    <td>
+                        @foreach (var prop in entity.Properties)
+                        {
+                            <p><strong>@prop.Key:</strong> @prop.Value</p>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<BaseEntity> entities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        entities = await Http.GetFromJsonAsync<List<BaseEntity>>("api/DynamicEntity");
+    }
+}

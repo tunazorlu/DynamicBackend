@@ -1,0 +1,36 @@
+﻿@page "/createentity"
+@using Shared.Entities
+@inject HttpClient Http
+@inject NavigationManager Navigation
+<h3>Add Dynamic Property</h3>
+
+<input @bind="propertyName" placeholder="Property Name" />
+<input @bind="propertyValue" placeholder="Property Value" />
+<button @onclick="AddProperty">Add Property</button>
+
+@code {
+    private string propertyName;
+    private string propertyValue;
+
+    private async Task AddProperty()
+    {
+        var dynamicProperty = new
+        {
+            Name = propertyName,
+            Value = propertyValue // Burada değer string olarak gönderiliyor
+        };
+
+        // Backend API'nizin tam URL'sini kullanın
+        var backendUrl = "https://your-backend-url.com/DynamicProperty/add-property"; // Backend URL'sini buraya yazın
+
+        var response = await Http.PostAsJsonAsync(backendUrl, dynamicProperty);
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Property added successfully");
+        }
+        else
+        {
+            Console.WriteLine("Error adding property");
+        }
+    }
+}
