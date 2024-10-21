@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Shared.Entities;
 
 namespace Backend.Data;
@@ -11,8 +12,11 @@ public class DynamicDbContext(DbContextOptions<DynamicDbContext> options) : DbCo
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Tüm entity'leri dinamik olarak yapılandır
-        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<DynamicProperty>()
+                    .Property(e => e.Value)
+                    .HasConversion(
+                        v => JsonConvert.SerializeObject(v),
+                        v => JsonConvert.DeserializeObject<object>(v)); // JSON formatına çeviriyoruz
     }
 
     public void AddEntityType(string entityName, Dictionary<string, Type> properties, ModelBuilder modelBuilder)

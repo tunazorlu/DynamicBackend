@@ -29,7 +29,7 @@ else
                     <td>
                         @foreach (var prop in entity.Properties)
                         {
-                            <p><strong>@prop.Key:</strong> @prop.Value</p>
+                            <p><strong>@prop.Name:</strong> @prop.Value</p> <!-- 'Key' yerine 'Name' kullanıldı -->
                         }
                     </td>
                 </tr>
@@ -43,6 +43,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        entities = await Http.GetFromJsonAsync<List<BaseEntity>>("api/DynamicEntity");
+        entities = await Http.GetFromJsonAsync<List<BaseEntity>>("https://localhost:5002/api/DynamicEntity");
     }
 }

@@ -1,0 +1,14 @@
+
+Backend/appsettings.json
+
+Backend/bin/
+
+Backend/obj/
+
+Frontend/obj/
+
+Shared/bin/
+
+Shared/obj/
+
+.vs/

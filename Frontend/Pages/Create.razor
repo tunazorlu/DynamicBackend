@@ -21,7 +21,7 @@
         };
 
         // Backend API'nizin tam URL'sini kullanın
-        var backendUrl = "https://your-backend-url.com/DynamicProperty/add-property"; // Backend URL'sini buraya yazın
+        var backendUrl = "https://localhost:5002/api/DynamicEntity"; // Backend URL'sini buraya yazın
 
         var response = await Http.PostAsJsonAsync(backendUrl, dynamicProperty);
         if (response.IsSuccessStatusCode)
