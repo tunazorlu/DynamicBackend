@@ -1,42 +1,43 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Shared.Entities;
 
-namespace Backend.Data;
-
-public class DynamicDbContext(DbContextOptions<DynamicDbContext> options) : DbContext(options)
+namespace Backend.Data
 {
-    public DbSet<BaseEntity> Entities { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public class DynamicDbContext : DbContext
     {
-        modelBuilder.Entity<DynamicProperty>()
-                    .Property(e => e.Value)
-                    .HasConversion(
-                        v => JsonConvert.SerializeObject(v),
-                        v => JsonConvert.DeserializeObject<object>(v)); // JSON formatına çeviriyoruz
-    }
-
-    public void AddEntityType(string entityName, Dictionary<string, Type> properties, ModelBuilder modelBuilder)
-    {
-        var entityBuilder = modelBuilder.Entity(entityName);
-        entityBuilder.HasKey("Id");
-
-        foreach (var property in properties)
+        public DynamicDbContext(DbContextOptions<DynamicDbContext> options) : base(options)
         {
-            entityBuilder.Property(property.Value, property.Key);
         }
-    }
 
-    // Migration'u kontrol edip uygular
-    public async Task ApplyMigration()
-    {
-        var pendingMigrations = await Database.GetPendingMigrationsAsync();
-        if (pendingMigrations.Any())
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            await Database.MigrateAsync();
+            base.OnModelCreating(modelBuilder);
+
+            // Örnek dinamik tablo oluşturma
+            Dictionary<string, Type> dynamicProperties = new Dictionary<string, Type>
+            {
+                { "DynamicProperty1", typeof(string) },
+                { "DynamicProperty2", typeof(int) }
+            };
+
+            // Yeni bir dinamik entity tipi oluşturun
+            CreateDynamicEntity("MyDynamicTable", dynamicProperties, modelBuilder);
+        }
+
+        private void CreateDynamicEntity(string entityName, Dictionary<string, Type> properties, ModelBuilder modelBuilder)
+        {
+            // Dinamik entity oluşturmak için
+            var entityBuilder = modelBuilder.Entity(entityName);
+            entityBuilder.HasKey("Id");
+
+            foreach (var property in properties)
+            {
+                // Property'leri ekleyin
+                entityBuilder.Property(property.Value, property.Key);
+            }
         }
     }
 }
