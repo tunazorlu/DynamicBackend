@@ -1,43 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.Emit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
+using Shared.Entities;
 
-namespace Backend.Data
+namespace Backend.Data;
+public class DynamicDbContext : DbContext
 {
-    public class DynamicDbContext : DbContext
+    public DynamicDbContext(DbContextOptions<DynamicDbContext> options) : base(options)
     {
-        public DynamicDbContext(DbContextOptions<DynamicDbContext> options) : base(options)
+    }
+
+    public DbSet<MetaTable> MetaTables { get; set; }
+    public DbSet<MetaColumn> MetaColumns { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<MetaTable>(entity =>
         {
-        }
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired();
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        modelBuilder.Entity<MetaColumn>(entity =>
         {
-            base.OnModelCreating(modelBuilder);
-
-            // Örnek dinamik tablo oluşturma
-            Dictionary<string, Type> dynamicProperties = new Dictionary<string, Type>
-            {
-                { "DynamicProperty1", typeof(string) },
-                { "DynamicProperty2", typeof(int) }
-            };
-
-            // Yeni bir dinamik entity tipi oluşturun
-            CreateDynamicEntity("MyDynamicTable", dynamicProperties, modelBuilder);
-        }
-
-        private void CreateDynamicEntity(string entityName, Dictionary<string, Type> properties, ModelBuilder modelBuilder)
-        {
-            // Dinamik entity oluşturmak için
-            var entityBuilder = modelBuilder.Entity(entityName);
-            entityBuilder.HasKey("Id");
-
-            foreach (var property in properties)
-            {
-                // Property'leri ekleyin
-                entityBuilder.Property(property.Value, property.Key);
-            }
-        }
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired();
+            entity.HasOne(e => e.MetaTable)
+                .WithMany(e => e.Columns)
+                .HasForeignKey(e => e.MetaTableId);
+        });
     }
 }

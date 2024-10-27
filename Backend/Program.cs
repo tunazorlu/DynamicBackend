@@ -1,16 +1,28 @@
 using Backend.Data;
+using Backend.Interfaces;
+using Backend.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
-builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DynamicDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register Services
+builder.Services.AddScoped<IDynamicTableService, DynamicTableService>();
+
 // CORS ayarlarýný ekleyin
 builder.Services.AddCors(options =>
 {
@@ -31,16 +43,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAllOrigins");
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
-// Runtime migration'larý otomatik olarak uygulamak için burada kullanabiliriz
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<DynamicDbContext>();
-    await dbContext.ApplyMigration();
-}
 
 app.Run();
