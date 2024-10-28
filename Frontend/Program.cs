@@ -1,6 +1,7 @@
 using Frontend;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor;
 using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -11,6 +12,9 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Backend API ile iletiþim kurmak için HttpClient eklenir
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5001/") });
-builder.Services.AddMudServices();
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.TopRight;
+});
 
 await builder.Build().RunAsync();

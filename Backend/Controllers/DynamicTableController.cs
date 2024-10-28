@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
+using System.Text.Json;
 
 namespace Backend.Controllers;
 
@@ -10,26 +11,49 @@ namespace Backend.Controllers;
 public class DynamicTableController : ControllerBase
 {
     private readonly IDynamicTableService _tableService;
+    private readonly ILogger<DynamicTableController> _logger;
 
-    public DynamicTableController(IDynamicTableService tableService)
+    public DynamicTableController(IDynamicTableService tableService, ILogger<DynamicTableController> logger)
     {
         _tableService = tableService;
+        _logger = logger;
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateTable([FromBody] CreateTableDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateTableDto dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         try
         {
-            var tableId = await _tableService.CreateTableAsync(dto);
-            return Ok(new { TableId = tableId });
+            // Gelen veriyi logla
+            _logger.LogInformation($"Received request: {JsonSerializer.Serialize(dto)}");
+
+            // Basit validasyonlar
+            if (string.IsNullOrEmpty(dto.TableName))
+                return BadRequest("Table name is required");
+
+            if (!dto.Columns.Any())
+                return BadRequest("At least one column is required");
+
+            // Primary key kontrolü
+            if (!dto.Columns.Any(c => c.IsPrimaryKey))
+                return BadRequest("At least one column must be marked as primary key");
+
+            var result = await _tableService.CreateTableAsync(dto);
+
+            return Ok(result);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { Message = "Error creating table", Error = ex.Message });
+            // İç hatayı loglayalım
+            _logger.LogError(ex, "Error creating table");
+
+            // Detaylı hata mesajını döndürelim
+            return StatusCode(500, new
+            {
+                message = "Error creating table",
+                error = ex.ToString(),  // Tüm hata stacktrace'ini görelim
+                innerException = ex.InnerException?.Message
+            });
         }
     }
 

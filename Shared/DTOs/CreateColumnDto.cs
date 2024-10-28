@@ -3,21 +3,87 @@ using System.Runtime.CompilerServices;
 
 namespace Shared.DTOs;
 
+//public class CreateColumnDto : INotifyPropertyChanged
+//{
+//    private string name = string.Empty;
+//    private string dataType = string.Empty;
+//    private bool isNullable;
+//    private bool isPrimaryKey;
+
+//    public string Name
+//    {
+//        get => name;
+//        set
+//        {
+//            if (name != value)
+//            {
+//                name = value;
+//                OnPropertyChanged();
+//            }
+//        }
+//    }
+
+//    public string DataType
+//    {
+//        get => dataType;
+//        set
+//        {
+//            if (dataType != value)
+//            {
+//                dataType = value;
+//                OnPropertyChanged();
+//            }
+//        }
+//    }
+
+//    public bool IsNullable
+//    {
+//        get => isNullable;
+//        set
+//        {
+//            if (isNullable != value)
+//            {
+//                isNullable = value;
+//                OnPropertyChanged();
+//            }
+//        }
+//    }
+
+//    public bool IsPrimaryKey
+//    {
+//        get => isPrimaryKey;
+//        set
+//        {
+//            if (isPrimaryKey != value)
+//            {
+//                isPrimaryKey = value;
+//                OnPropertyChanged();
+//            }
+//        }
+//    }
+
+//    public event PropertyChangedEventHandler? PropertyChanged;
+
+//    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+//    {
+//        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+//    }
+//}
 public class CreateColumnDto : INotifyPropertyChanged
 {
-    private string name = string.Empty;
-    private string dataType = string.Empty;
-    private bool isNullable;
-    private bool isPrimaryKey;
+    private string _name = string.Empty;
+    private string _dataType = "string";
+    private bool _isNullable = true;
+    private bool _isPrimaryKey = false;
 
     public string Name
     {
-        get => name;
+        get => _name;
         set
         {
-            if (name != value)
+            if (_name != value)
             {
-                name = value;
+                _name = value;
                 OnPropertyChanged();
             }
         }
@@ -25,12 +91,12 @@ public class CreateColumnDto : INotifyPropertyChanged
 
     public string DataType
     {
-        get => dataType;
+        get => _dataType;
         set
         {
-            if (dataType != value)
+            if (_dataType != value)
             {
-                dataType = value;
+                _dataType = value;
                 OnPropertyChanged();
             }
         }
@@ -38,12 +104,12 @@ public class CreateColumnDto : INotifyPropertyChanged
 
     public bool IsNullable
     {
-        get => isNullable;
+        get => _isNullable;
         set
         {
-            if (isNullable != value)
+            if (_isNullable != value)
             {
-                isNullable = value;
+                _isNullable = value;
                 OnPropertyChanged();
             }
         }
@@ -51,12 +117,12 @@ public class CreateColumnDto : INotifyPropertyChanged
 
     public bool IsPrimaryKey
     {
-        get => isPrimaryKey;
+        get => _isPrimaryKey;
         set
         {
-            if (isPrimaryKey != value)
+            if (_isPrimaryKey != value)
             {
-                isPrimaryKey = value;
+                _isPrimaryKey = value;
                 OnPropertyChanged();
             }
         }

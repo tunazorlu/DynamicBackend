@@ -12,85 +12,83 @@
         <MudText Typo="Typo.h5" Class="mb-4">Create Dynamic Table</MudText>
 
         <MudForm @ref="form" @bind-IsValid="@isFormValid">
-            <MudTextField T="string" 
-                         Label="Table Name" 
-                         @bind-Value="tableDto.TableName"
-                         Required="true"
-                         RequiredError="Table name is required"
-                         Validation="@(new Func<string, IEnumerable<string>>(ValidateTableName))"
-                         Immediate="true"
-                         Class="mb-4"/>
+            <MudTextField T="string"
+                          Label="Table Name"
+                          @bind-Value="tableDto.TableName"
+                          Required="true"
+                          RequiredError="Table name is required"
+                          Validation="@(new Func<string, IEnumerable<string>>(ValidateTableName))"
+                          Immediate="true"
+                          Class="mb-4" />
 
             <MudExpansionPanels>
                 @foreach (var column in tableDto.Columns)
                 {
-                    <MudExpansionPanel>
-                        <TitleContent>
-                            <div class="d-flex">
-                                <MudText>
-                                    @(string.IsNullOrEmpty(column.Name) ? "New Column" : column.Name)
-                                    (@column.DataType)
-                                </MudText>
-                            </div>
-                        </TitleContent>
-                        <ChildContent>
-                            <div class="d-flex flex-column gap-4">
-                                <MudTextField T="string"
-                                            Label="Column Name"
-                                            @bind-Value="column.Name"
-                                            Required="true"
-                                            RequiredError="Column name is required"
-                                            Validation="@(new Func<string, IEnumerable<string>>(ValidateColumnName))"
-                                            Immediate="true"/>
+                    <MudExpansionPanels>
+                        @foreach (var column in tableDto.Columns)
+                        {
+                            <MudExpansionPanel Text="@(string.IsNullOrEmpty(column.Name) ? "New Column" : $"{column.Name} ({column.DataType})")">
+                                <div class="d-flex flex-column gap-4">
+                                    <MudTextField T="string"
+                                                  Label="Column Name"
+                                                  @bind-Value="column.Name"
+                                                  Required="true"
+                                                  RequiredError="Column name is required"
+                                                  Validation="@(new Func<string, IEnumerable<string>>(ValidateColumnName))"
+                                                  Immediate="true" />
 
-                                <MudSelect T="string" 
-                                         Label="Data Type" 
-                                         @bind-Value="column.DataType"
-                                         Required="true">
-                                    @foreach (var dataType in dataTypes)
-                                    {
-                                        <MudSelectItem Value="@dataType">@dataType</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                    <MudSelect T="string"
+                                               Label="Data Type"
+                                               Value="@column.DataType"
+                                               ValueChanged="@((string val) => { column.DataType = val; StateHasChanged(); })"
+                                               Required="true">
+                                        @foreach (var dataType in dataTypes)
+                                        {
+                                            <MudSelectItem T="string" Value="@dataType">@dataType</MudSelectItem>
+                                        }
+                                    </MudSelect>
 
-                                <div class="d-flex gap-4">
-                                    <MudCheckBox T="bool" 
-                                               Label="Is Nullable" 
-                                               Color="Color.Primary"
-                                               @bind-Checked="column.IsNullable"/>
+                                    <div class="d-flex gap-4">
+                                        <MudCheckBox T="bool"
+                                                     Label="Is Nullable"
+                                                     Checked="@column.IsNullable"
+                                                     CheckedChanged="@((bool val) => { column.IsNullable = val; StateHasChanged(); })"
+                                                     Color="Color.Primary" />
 
-                                    <MudCheckBox T="bool" 
-                                               Label="Is Primary Key" 
-                                               Color="Color.Primary"
-                                               @bind-Checked="column.IsPrimaryKey"
-                                               Disabled="@HasPrimaryKey(column)"/>
+                                        <MudCheckBox T="bool"
+                                                     Label="Is Primary Key"
+                                                     Checked="@column.IsPrimaryKey"
+                                                     CheckedChanged="@((bool val) => { column.IsPrimaryKey = val; StateHasChanged(); })"
+                                                     Color="Color.Primary"
+                                                     Disabled="@HasPrimaryKey(column)" />
+                                    </div>
+
+                                    <MudButton OnClick="@(() => RemoveColumn(column))"
+                                               Color="Color.Error"
+                                               Variant="Variant.Outlined"
+                                               StartIcon="@Icons.Material.Filled.Delete">
+                                        Remove Column
+                                    </MudButton>
                                 </div>
-
-                                <MudButton OnClick="@(() => RemoveColumn(column))" 
-                                         Color="Color.Error" 
-                                         Variant="Variant.Outlined"
-                                         StartIcon="@Icons.Material.Filled.Delete">
-                                    Remove Column
-                                </MudButton>
-                            </div>
-                        </ChildContent>
-                    </MudExpansionPanel>
+                            </MudExpansionPanel>
+                        }
+                    </MudExpansionPanels>
                 }
             </MudExpansionPanels>
 
             <div class="d-flex gap-4 my-4">
-                <MudButton OnClick="AddColumn" 
-                          Color="Color.Primary" 
-                          Variant="Variant.Outlined"
-                          StartIcon="@Icons.Material.Filled.Add">
+                <MudButton OnClick="AddColumn"
+                           Color="Color.Primary"
+                           Variant="Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Add">
                     Add Column
                 </MudButton>
 
-                <MudButton OnClick="CreateTableAsync" 
-                          Color="Color.Primary" 
-                          Variant="Variant.Filled"
-                          Disabled="!isFormValid || tableDto.Columns.Count == 0"
-                          Loading="@isProcessing">
+                <MudButton OnClick="CreateTableAsync"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           Disabled="!isFormValid || tableDto.Columns.Count == 0"
+                           Loading="@isProcessing">
                     Create Table
                 </MudButton>
             </div>
@@ -101,19 +99,19 @@
     {
         <MudPaper Class="pa-4 mt-6">
             <MudText Typo="Typo.h6" Class="mb-4">SQL Preview</MudText>
-            <MudHighlighter Text="@sqlPreview" 
-                           HighlightedText="@tableDto.TableName"
-                           Class="mud-theme-primary"/>
+            <MudHighlighter Text="@sqlPreview"
+                            HighlightedText="@tableDto.TableName"
+                            Class="mud-theme-primary" />
         </MudPaper>
     }
 </MudContainer>
 
 @code {
     private CreateTableDto tableDto = new()
-    {
-        TableName = "",
-        Columns = new List<CreateColumnDto>()
-    };
+        {
+            TableName = "",
+            Columns = new List<CreateColumnDto>()
+        };
 
     private MudForm form;
     private bool isFormValid;
@@ -123,24 +121,24 @@
 
     private readonly string[] dataTypes = new[]
     {
-        "string",
-        "int",
-        "long",
-        "decimal",
-        "datetime",
-        "bool",
-        "double",
-        "guid"
-    };
+    "string",
+    "int",
+    "long",
+    "decimal",
+    "datetime",
+    "bool",
+    "double",
+    "guid"
+};
 
     private IEnumerable<string> ValidateTableName(string tableName)
     {
         if (string.IsNullOrWhiteSpace(tableName))
             yield return "Table name is required";
-        
+
         if (tableName.Length < 3)
             yield return "Table name must be at least 3 characters";
-        
+
         if (!System.Text.RegularExpressions.Regex.IsMatch(tableName, "^[a-zA-Z][a-zA-Z0-9_]*$"))
             yield return "Table name must start with a letter and contain only letters, numbers, and underscores";
     }
@@ -149,10 +147,10 @@
     {
         if (string.IsNullOrWhiteSpace(columnName))
             yield return "Column name is required";
-        
+
         if (!System.Text.RegularExpressions.Regex.IsMatch(columnName, "^[a-zA-Z][a-zA-Z0-9_]*$"))
             yield return "Column name must start with a letter and contain only letters, numbers, and underscores";
-        
+
         if (tableDto.Columns.Count(c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase)) > 1)
             yield return "Column name must be unique";
     }
@@ -164,17 +162,24 @@
 
     private void AddColumn()
     {
-        var newColumn = new CreateColumnDto
+        try
         {
-            Name = string.Empty,
-            DataType = "string",
-            IsNullable = true,
-            IsPrimaryKey = false
-        };
-    
-        StateHasChanged(); // State'i强制 güncelle
-        tableDto.Columns.Add(newColumn);
-        UpdateSqlPreview();
+            var newColumn = new CreateColumnDto
+                {
+                    Name = string.Empty,
+                    DataType = "string",
+                    IsNullable = true,
+                    IsPrimaryKey = false
+                };
+
+            tableDto.Columns.Add(newColumn);
+            StateHasChanged();
+            UpdateSqlPreview();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding column: {ex.Message}", Severity.Error);
+        }
     }
 
     private void RemoveColumn(CreateColumnDto column)
@@ -206,7 +211,7 @@
         sqlPreview = $"CREATE TABLE {tableDto.TableName} (\n" +
                     string.Join(",\n", columnDefinitions) +
                     "\n);";
-        
+
         showPreview = true;
     }
 
@@ -228,10 +233,21 @@
     {
         try
         {
+            // Validation
+            if (!tableDto.Columns.Any(c => c.IsPrimaryKey))
+            {
+                Snackbar.Add("At least one column must be marked as primary key", Severity.Warning);
+                return;
+            }
+
             isProcessing = true;
-            
+
+            Console.WriteLine($"Creating table: {System.Text.Json.JsonSerializer.Serialize(tableDto)}");
+
             var response = await Http.PostAsJsonAsync("https://localhost:5002/api/DynamicTable", tableDto);
-            
+            var responseContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Response: {responseContent}");
+
             if (response.IsSuccessStatusCode)
             {
                 Snackbar.Add("Table created successfully!", Severity.Success);
@@ -239,18 +255,25 @@
             }
             else
             {
-                var error = await response.Content.ReadAsStringAsync();
-                Snackbar.Add($"Error creating table: {error}", Severity.Error);
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                Snackbar.Add($"Error: {error?.message} - {error?.error}", Severity.Error);
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Exception: {ex}");
             Snackbar.Add($"Error: {ex.Message}", Severity.Error);
         }
         finally
         {
             isProcessing = false;
         }
+    }
+
+    public class ErrorResponse
+    {
+        public string message { get; set; }
+        public string error { get; set; }
     }
 
     protected override void OnParametersSet()
