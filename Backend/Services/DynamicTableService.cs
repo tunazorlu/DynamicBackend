@@ -162,11 +162,24 @@ public class DynamicTableService : IDynamicTableService
         }
     }
 
+    //public async Task<List<MetaTable>> GetAllTablesAsync()
+    //{
+    //    return await _context.MetaTables
+    //        .Include(t => t.Columns)
+    //        .OrderBy(t => t.Name)
+    //        .ToListAsync();
+    //}
+
     public async Task<List<MetaTable>> GetAllTablesAsync()
     {
         return await _context.MetaTables
-            .Include(t => t.Columns)
-            .OrderBy(t => t.Name)
+            .Select(mt => new MetaTable
+            {
+                Id = mt.Id,
+                Name = mt.Name,
+                CreatedAt = mt.CreatedAt,
+                CreatedBy = mt.CreatedBy ?? "Unknown" // Null olduğunda "Unknown" atanacak
+            })
             .ToListAsync();
     }
 
