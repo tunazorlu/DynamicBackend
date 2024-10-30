@@ -44,6 +44,7 @@ namespace Shared.DTOs;
 //}
 public class CreateTableDto : INotifyPropertyChanged
 {
+    public int Id { get; set; } // Tablo kimliği için gerekli alan
     private string _tableName = string.Empty;
     private List<CreateColumnDto> _columns = new();
 
