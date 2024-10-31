@@ -162,14 +162,6 @@ public class DynamicTableService : IDynamicTableService
         }
     }
 
-    //public async Task<List<MetaTable>> GetAllTablesAsync()
-    //{
-    //    return await _context.MetaTables
-    //        .Include(t => t.Columns)
-    //        .OrderBy(t => t.Name)
-    //        .ToListAsync();
-    //}
-
     public async Task<List<MetaTable>> GetAllTablesAsync()
     {
         return await _context.MetaTables
@@ -183,8 +175,98 @@ public class DynamicTableService : IDynamicTableService
             .ToListAsync();
     }
 
-    Task<bool> IDynamicTableService.DeleteTableAsync(string tableName)
+    public async Task<bool> DeleteTableAsync(string tableName)
     {
-        throw new NotImplementedException();
+        try
+        {
+            // MetaTable kaydını sil
+            var metaTable = await _context.MetaTables.SingleOrDefaultAsync(t => t.Name == tableName);
+            if (metaTable != null)
+            {
+                _context.MetaTables.Remove(metaTable);
+                await _context.SaveChangesAsync();
+            }
+
+            // Fiziksel tabloyu sil
+            var dropTableSql = $"DROP TABLE IF EXISTS {tableName}";
+            await using var cmd = new NpgsqlCommand(dropTableSql, _connection);
+            await _connection.OpenAsync();
+            await cmd.ExecuteNonQueryAsync();
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting table {TableName}", tableName);
+            throw;
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
+    }
+
+    public async Task<int> UpdateDataAsync(string tableName, int id, Dictionary<string, object> updatedData)
+    {
+        var setClause = string.Join(", ", updatedData.Keys.Select((k, i) => $"{k} = @p{i}"));
+        var query = $"UPDATE {tableName} SET {setClause} WHERE id = @id";
+
+        await using var cmd = new NpgsqlCommand(query, _connection);
+        var paramIndex = 0;
+        foreach (var value in updatedData.Values)
+        {
+            cmd.Parameters.AddWithValue($"@p{paramIndex++}", value ?? DBNull.Value);
+        }
+        cmd.Parameters.AddWithValue("@id", id);
+
+        await _connection.OpenAsync();
+        try
+        {
+            return await cmd.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
+    }
+
+    public async Task<int> DeleteDataAsync(string tableName, int id)
+    {
+        var query = $"DELETE FROM {tableName} WHERE id = @id";
+
+        await using var cmd = new NpgsqlCommand(query, _connection);
+        cmd.Parameters.AddWithValue("@id", id);
+
+        await _connection.OpenAsync();
+        try
+        {
+            return await cmd.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
+    }
+
+    public async Task<bool> RenameTableAsync(string oldTableName, string newTableName)
+    {
+        var query = $"ALTER TABLE {oldTableName} RENAME TO {newTableName}";
+
+        await using var cmd = new NpgsqlCommand(query, _connection);
+        await _connection.OpenAsync();
+        try
+        {
+            await cmd.ExecuteNonQueryAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error renaming table {OldTableName} to {NewTableName}", oldTableName, newTableName);
+            throw;
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
     }
 }
