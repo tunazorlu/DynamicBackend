@@ -61,7 +61,26 @@ public class DynamicTableController : ControllerBase
     public async Task<IActionResult> GetAllTables()
     {
         var tables = await _tableService.GetAllTablesAsync();
-        return Ok(tables);
+        if (tables != null)
+        {
+            var tableDtos = tables.Select(t => new MetaTableDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                CreatedAt = t.CreatedAt,
+                CreatedBy = t.CreatedBy ?? "Unknown",
+                Columns = t.Columns?.Select(c => new MetaColumnDto
+                {
+                    Name = c.Name,
+                    DataType = c.DataType
+                }).ToList() ?? new List<MetaColumnDto>()
+            });
+            return Ok(tableDtos);
+        }
+        else
+        {
+            return StatusCode(500, "Error fetching tables: Tables list is null.");
+        }
     }
 
     [HttpGet("{tableName}")]
@@ -91,4 +110,43 @@ public class DynamicTableController : ControllerBase
             return StatusCode(500, new { Message = "Error inserting data", Error = ex.Message });
         }
     }
+
+    [HttpPut("{tableName}/data/{id}")]
+    public async Task<IActionResult> UpdateData(string tableName, int id, [FromBody] Dictionary<string, object> updatedData)
+    {
+        try
+        {
+            var rowsAffected = await _tableService.UpdateDataAsync(tableName, id, updatedData);
+
+            if (rowsAffected == 0)
+                return NotFound(new { Message = $"No data found with id {id} in table {tableName}" });
+
+            return Ok(new { RowsAffected = rowsAffected });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating data in table {TableName}", tableName);
+            return StatusCode(500, new { Message = "Error updating data", Error = ex.Message });
+        }
+    }
+
+
+    [HttpDelete("{tableName}")]
+    public async Task<IActionResult> DeleteTable(string tableName)
+    {
+        try
+        {
+            var success = await _tableService.DeleteTableAsync(tableName);
+            if (!success)
+                return NotFound(new { Message = $"Table {tableName} not found or could not be deleted" });
+
+            return Ok(new { Message = $"Table {tableName} deleted successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting table {TableName}", tableName);
+            return StatusCode(500, new { Message = "Error deleting table", Error = ex.Message });
+        }
+    }
+
 }

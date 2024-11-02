@@ -1,20 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using Shared.Enums;
 
 public class DynamicProperty
 {
     public int Id { get; set; }
     public string Name { get; set; }
+    public PropertyType PropertyType { get; set; }
 
-    private object _value;
-
-    public object Value
-    {
-        get => _value;
-        set => _value = JsonConvert.SerializeObject(value); // Serialize ediyoruz
-    }
-
-    public T GetValue<T>()
-    {
-        return JsonConvert.DeserializeObject<T>(_value.ToString()); // Deserialize ederken doğru türü döndürür
-    }
+    public string StringValue { get; set; }
+    public int IntValue { get; set; }
+    public bool BoolValue { get; set; }
+    public DateTime DateTimeValue { get; set; }
 }

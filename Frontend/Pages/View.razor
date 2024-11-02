@@ -1,8 +1,9 @@
 ﻿@page "/viewentity"
 @using Shared.Entities
+@using Shared.Enums
 @inject HttpClient Http
 
-<h3>View All Entities</h3>
+<h3>View and Manage Tables</h3>
 
 @if (entities == null)
 {
@@ -10,7 +11,7 @@
 }
 else if (!entities.Any())
 {
-    <p>No entities found.</p>
+    <p>No tables found.</p>
 }
 else
 {
@@ -18,7 +19,8 @@ else
         <thead>
             <tr>
                 <th>Id</th>
-                <th>Properties</th>
+                <th>Table Name</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -26,23 +28,196 @@ else
             {
                 <tr>
                     <td>@entity.Id</td>
+                    <td>@entity.Name</td>
                     <td>
-                        @foreach (var prop in entity.Properties)
-                        {
-                            <p><strong>@prop.Name:</strong> @prop.Value</p> <!-- 'Key' yerine 'Name' kullanıldı -->
-                        }
+                        <button class="btn btn-primary btn-sm" @onclick="() => OpenEditModal(entity)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteEntity(entity.Id)">Delete</button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+    <button class="btn btn-success" @onclick="OpenCreateModal">Add New Table</button>
+}
+
+<!-- Edit Modal -->
+@if (showEditModal)
+{
+    <div class="modal show" tabindex="-1" style="display:block;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Table: @selectedEntity.Name</h5>
+                    <button type="button" class="btn-close" @onclick="CloseEditModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Table Name</label>
+                        <input class="form-control" @bind="selectedEntity.Name" />
+                    </div>
+
+                    @if (selectedEntity.Properties != null)
+                    {
+                        @foreach (var property in selectedEntity.Properties)
+                        {
+                            <div class="mb-3">
+                                <label>@property.Name</label>
+
+                                @switch (property.PropertyType)
+                                {
+                                    case PropertyType.String:
+                                        <input type="text" class="form-control" @bind-value="property.StringValue" />
+                                        break;
+                                    case PropertyType.Integer:
+                                        <input type="number" class="form-control" @bind-value="property.IntValue" />
+                                        break;
+                                    case PropertyType.Boolean:
+                                        <input type="checkbox" class="form-control" @bind-value="property.BoolValue" />
+                                        break;
+                                    case PropertyType.DateTime:
+                                        <input type="datetime-local" class="form-control" @bind-value="property.DateTimeValue" />
+                                        break;
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No properties found.</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @onclick="UpdateEntity">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseEditModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Create Modal -->
+@if (showCreateModal)
+{
+    <div class="modal show" tabindex="-1" style="display:block;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Table</h5>
+                    <button type="button" class="btn-close" @onclick="CloseCreateModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Table Name</label>
+                        <input class="form-control" @bind="newEntity.Name" />
+                    </div>
+                    <button class="btn btn-secondary" @onclick="AddProperty">Add Property</button>
+
+                    @if (newEntity.Properties != null)
+                    {
+                        @foreach (var property in newEntity.Properties)
+                        {
+                            <div class="mb-3">
+                                <label>Property Name</label>
+                                <input class="form-control" @bind="property.Name" />
+
+                                <label>Property Type</label>
+                                <select class="form-control" @bind="property.PropertyType">
+                                    @foreach (var propertyType in Enum.GetValues(typeof(PropertyType)))
+                                    {
+                                        <option value="@propertyType">@propertyType</option>
+                                    }
+                                </select>
+
+                                @switch (property.PropertyType)
+                                {
+                                    case PropertyType.String:
+                                        <label>String Value</label>
+                                        <input type="text" class="form-control" @bind-value="property.StringValue" />
+                                        break;
+                                    case PropertyType.Integer:
+                                        <label>Integer Value</label>
+                                        <input type="number" class="form-control" @bind-value="property.IntValue" />
+                                        break;
+                                    case PropertyType.Boolean:
+                                        <label>Boolean Value</label>
+                                        <input type="checkbox" class="form-control" @bind-value="property.BoolValue" />
+                                        break;
+                                        // Diğer türler için case'ler ekleyin
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" @onclick="CreateEntity">Create Table</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseCreateModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
     private List<BaseEntity> entities;
+    private BaseEntity selectedEntity;
+    private BaseEntity newEntity = new BaseEntity();
+    private bool showEditModal = false;
+    private bool showCreateModal = false;
 
     protected override async Task OnInitializedAsync()
     {
-        entities = await Http.GetFromJsonAsync<List<BaseEntity>>("https://localhost:5002/api/DynamicEntity");
+        await LoadEntities();
+    }
+
+    private async Task LoadEntities()
+    {
+        entities = await Http.GetFromJsonAsync<List<BaseEntity>>("https://localhost:5002/api/DynamicTable");
+    }
+
+    private void OpenEditModal(BaseEntity entity)
+    {
+        selectedEntity = entity;
+        showEditModal = true;
+    }
+
+    private void CloseEditModal()
+    {
+        showEditModal = false;
+    }
+
+    private void OpenCreateModal()
+    {
+        newEntity = new BaseEntity { Properties = new List<DynamicProperty>() };
+        showCreateModal = true;
+    }
+
+    private void CloseCreateModal()
+    {
+        showCreateModal = false;
+    }
+
+    private async Task UpdateEntity()
+    {
+        await Http.PutAsJsonAsync($"https://localhost:5002/api/DynamicTable/{selectedEntity.Id}", selectedEntity);
+        await LoadEntities();
+        CloseEditModal();
+    }
+
+    private async Task DeleteEntity(int id)
+    {
+        await Http.DeleteAsync($"https://localhost:5002/api/DynamicTable/{id}");
+        await LoadEntities();
+    }
+
+    private async Task CreateEntity()
+    {
+        await Http.PostAsJsonAsync("https://localhost:5002/api/DynamicTable", newEntity);
+        await LoadEntities();
+        CloseCreateModal();
+    }
+
+    private void AddProperty()
+    {
+        newEntity.Properties.Add(new DynamicProperty { PropertyType = PropertyType.String }); // Varsayılan olarak String türü
     }
 }
